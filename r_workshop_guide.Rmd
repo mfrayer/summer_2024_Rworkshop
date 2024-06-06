@@ -1,0 +1,465 @@
+---
+title: "Summer 2024: Introduction to R"
+date : "`r Sys.Date()`"
+output: 
+  html_document : 
+    code_folding: show
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(viridis)
+
+```
+
+
+# Pre-Workshop 
+
+Before the workshop, you should have R and RStudio downloaded on your computer. You should also install the following packages: 
+
+Required: `tidyverse` 
+
+Optional: `knitr`, `viridis`
+
+# How to read this document: 
+
+Below, you will see code in gray boxes, followed by R output in white boxes. The output will appear exactly as it would in the terminal. For example: 
+
+```{r example}
+
+print("Hello World!")
+
+```
+
+
+# Goals
+
+1. Review the basics of R
+2. Discuss data cleaning and summary  
+3. Discuss data visualization
+
+
+# Day 1
+
+## Review Basic R commands 
+
+R has a very clean syntax (referring to the set of rules that defines what symbols mean for each programming language). White space is generally ignored, so you can feel free to add or remove white spaces in whatever way makes the code most readable for you. Variables can be used to store information, and are simply referred to by their name. 
+
+```{r commands, class.source = 'fold-show'}
+
+5+10 # A basic command
+
+total <- 5+10 # Assign a value to a variable
+total 
+
+subtotal1 <- 5 
+subtotal2 <- 10
+total <- subtotal1 + subtotal2 # Can use variables within later code
+total # Comments: Total is the sum of subtotal1 and subtotal2 
+
+print("Hello World") # A basic function
+
+```
+
+Comments (anything written after a #) will be ignored by R and should be used to annotate your code so that future you knows what you did. Remember: You can be the best or worst collaborator for Future You. 
+
+There are several "types" of data recognized by R. 
+
+- character 
+- numeric 
+- integer
+- logical 
+- also complex and raw, but we will ignore these for now. 
+
+We were able to add `subtotal1` and `subtotal2` together because they were both numeric data. What happens if they are characters? 
+
+```{r data_types}
+
+# Run:
+subtotal1 <- "5"
+##subtotal1 + subtotal2
+# Won't work because subtotal1 is not numeric
+
+typeof(subtotal1)
+typeof(subtotal2)
+
+```
+
+We can *coerce* subtotal1 to be numeric again, but be careful as this can sometimes give unexpected results. 
+
+```{r coerce}
+subtotal1 <- as.numeric(subtotal1)
+typeof(subtotal1)
+```
+
+
+## Basic Data Structures 
+
+There are several data structures that you can use in R: 
+
+- vectors
+- matrices  
+- dataframes
+- lists 
+
+
+```{r data_structures}
+
+a_variable <- "guttatus"
+a_vector <- c("nasutus","decorus")
+a_vector <- c(a_vector,a_variable)
+
+length(a_vector)
+class(a_vector)
+
+another_vector <- 1:3
+another_vector <- seq(3)
+another_vector <- seq(from=1, to=3, by=1)
+
+a_matrix <- matrix(cbind(a_vector,another_vector), ncol = 2)
+a_matrix[2,1] # Check row2, col1
+
+a_dataframe <- as.data.frame(cbind(a_vector,another_vector))
+colnames(a_dataframe) <- c("species","index")
+
+a_dataframe[2,1] # Check row2, col1
+a_dataframe$species
+a_dataframe[["species"]]
+
+class(a_dataframe)
+
+head(a_dataframe) #tail
+ncol(a_dataframe) #nrow
+
+str(a_dataframe)
+
+a_list <- list(1,"flower",a_variable)
+a_list[[2]]
+
+another_list <- list(a=45,b=c(36,99),c="corolla")
+another_list[[2]][1]
+another_list$b[1]
+another_list[["b"]]
+
+```
+
+## Help and Defaults
+
+You can always run something like `?mean` in order to get documentation on a function. This will usually outline the "arguments", or components of a function. In R, you will find that a function often has default values for many of its arguments. Those arguments will not be required for it to run. For example, the function `mean()` has two additional arguments called `trim` and `na.rm`. When you run `mean(another_vector)`, you are actually running `mean(another_vector,trim=0,na.rm=FALSE)`. In most cases, these defaults will be all you need. But in some cases, you may need to tweak these arguments to better serve your analysis. The defaults will always be listed in the documentation.  
+
+
+## Importing Data 
+
+You will need to match the type of file you have to the type of function you use for importing. Here, we have one file that is a "csv" and one that is "tab-delimited". This helps R correctly divide the data into columns. 
+
+```{r read_data}
+
+flowering_time <- read.table("flowering_data.txt", header=TRUE)
+germination <- read.csv("germination_data.csv")
+
+```
+
+
+## Cleaning Data 
+
+The best thing to do is to look at your data. If the table is small enough that you can visually look at it, do that. Otherwise, summarize your data in as many ways as you can to make sure that your expectations for the data set are met.   
+
+```{r clean_data} 
+
+unique(flowering_time$Population) # Make sure that all the expected categories, and ONLY the expected categories are present
+nrow(flowering_time) # Make sure that you have the number of entries that you expect 
+is.na(flowering_time) # Look for missing data 
+
+# The flowering data has entries for plants that did not flower. For this analysis, we can ignore those, so we will remove them: 
+flowering_time_clean <- na.omit(flowering_time)  
+nrow(flowering_time_clean)
+
+germination_clean <- na.omit(germination)
+
+nrow(germination)
+nrow(germination_clean)
+
+# The germination data does not have NAs so na.omit did not make any changes. Instead, it has several blank rows. One way we can remove those is: 
+germination_clean <- germination[!(germination$Name==""), ]
+
+nrow(germination)
+nrow(germination_clean)
+
+```
+
+
+## Summarizing Data
+
+There are many ways to summarize data, but I like the tidyr functions.
+
+Summarizing is also a really great way to do additional checks on your data. Do you have the number of entries per category that you expect? 
+
+```{r summaries}
+
+germination_summary <- germination_clean %>% 
+# We use the "pipe" (%>%) to pass the data forward to the next function
+  group_by(Population,Germinated,GA_treated) %>% 
+# This function can be used to group data by the categorical variables within those columns. In this case, it will group data by all combinations of values from the columns Population, Germinated, and GA_treated
+  tally() 
+# This will count the rows in each grouping and create a summary table with the counts in a new column called n. 
+
+germination_summary2 <- germination_summary %>% group_by(GA_treated) %>% summarize(total=sum(n)) 
+# summarize will create a summary column using whatever function we ask. In this case, it makes a column that we have named total that will add together the values from the column n, within the groupings that we provided to group_by. 
+
+```
+
+## Learn by Trying
+
+I find that it is easiest to learn coding by trying to answer my own questions with my own data. Below are several questions we can answer using the flowering data that we imported above. Please keep in mind that the answers that I have provided are **NOT** the only way to get to these answers. 
+
+
+## Question 1
+
+Of all pots planted, how many germinated? 
+
+```{r q1}
+
+# as a Raw Number
+sum(germination_summary$n[germination_summary$Germinated=="Yes"]) # from summary table
+nrow(germination_clean[germination_clean$Germinated=="Yes",]) # from original table
+
+# as a Proportion
+sum(germination_summary$n[germination_summary$Germinated=="Yes"])/sum(germination_summary$n) # from summary table
+nrow(germination_clean[germination_clean$Germinated=="Yes",]) / nrow(germination_clean) # from original table
+
+# as a Percentage
+sum(germination_summary$n[germination_summary$Germinated=="Yes"])/sum(germination_summary$n) * 100 # from summary table
+nrow(germination_clean[germination_clean$Germinated=="Yes",]) / nrow(germination_clean) * 100 # from original table
+
+```
+
+
+## Question 2
+
+Which population had the highest germination rate? 
+
+```{r q2}
+
+# Calculate the rate per population
+germination_props <- germination_clean %>% group_by(Population,Germinated) %>% tally() %>% mutate(prop = n/sum(n)) 
+
+# Look at the table to see what is the highest
+germination_props %>% filter(Germinated=="Yes") %>% arrange(desc(prop))
+
+# One way to make R print out the answer directly
+highest <- max(germination_props$prop[germination_props$Germinated=="Yes"])
+germination_props$Population[germination_props$Germinated=="Yes" & germination_props$prop == highest]
+
+```
+
+
+## Question 3
+
+What was the average date of first flower for all of the plants? 
+
+This section relies on the package `lubridate` (usually installed as part of `tidyverse`).
+
+```{r q3}
+
+flowering_time_clean$Date_of_first_flower2 <- mdy(flowering_time_clean$Date_of_first_flower)
+
+# All plants were planted on March 21, 2023, so we can create a new column called Date_of_planting to input this additional data. 
+flowering_time_clean$Date_of_planting <- mdy("March 21, 2023")
+
+flowering_time_clean$flowering_time <- flowering_time_clean$Date_of_first_flower2 - flowering_time_clean$Date_of_planting
+
+mean(flowering_time_clean$flowering_time)
+
+# By Population with tidyr
+
+pop_means <- flowering_time_clean %>% group_by(Population) %>% summarize(average_flowering_time = mean(flowering_time))
+
+# Visualize your data
+ggplot(flowering_time_clean, aes(Population,flowering_time)) + geom_boxplot()
+
+```
+
+Visualizing the data reveals that populations OD and ODG have a much longer flowering time. This prompts me to remember that I did *not* plant all of the plants on the same date. I planted those two populations later. This is a great example of how plotting your data can be a good way of checking that it meets your expectations. 
+
+We can adjust the date of planting for just those populations and then recreate the plot. 
+
+```{r q3_part2}
+flowering_time_clean$Date_of_planting[flowering_time_clean$Population == "OD" | flowering_time_clean$Population == "ODG" ] <- mdy("April 26, 2023") # Change the date for only rows with population OD or ODG ("|" means "or" in this context)
+
+# Alternative code using tidy approach
+# flowering_time_clean <- flowering_time_clean %>% mutate(Date_of_planting = if_else(Population == "OD" | Population == "ODG", mdy("April 24, 2023"), Date_of_planting))
+
+flowering_time_clean$flowering_time <- flowering_time_clean$Date_of_first_flower2 - flowering_time_clean$Date_of_planting # Make sure that you recalculate the flowering time. It will not automatically change. 
+
+ggplot(flowering_time_clean, aes(Population,flowering_time)) + geom_boxplot()
+
+```
+
+
+## Question 4
+
+Did populations with faster flowering time have higher germination rates? 
+
+**We skipped this question in our workshop, but I will leave the code here for you to see.**
+
+```{r q4}
+
+pop_means <- flowering_time_clean %>% group_by(Population) %>% summarize(average_flowering_time = mean(flowering_time)) # remake pop means with corrected data table 
+
+merged_data <- full_join(germination_props,pop_means) # includes all rows from both tables
+merged_data <- right_join(germination_props,pop_means) # includes all rows from the right table, and only rows from the left table that match the right table 
+# These two dataframes will be different because germination_props has data for one more population than pop_means 
+
+merged_data_germs <- merged_data %>% filter(Germinated=="Yes") 
+
+ggplot(merged_data_germs, aes(prop,average_flowering_time)) + geom_point()
+
+
+# We can also calculate a correlation, or plot a regression line. This data is not ideal for this purpose, I just want to share the code with you. 
+
+# The line below will not work because of data types 
+#cor(merged_data_germs$prop,merged_data_germs$average_flowering_time)
+
+merged_data_germs$flower_time_2 <- as.numeric(merged_data_germs$average_flowering_time)
+cor(merged_data_germs$prop,merged_data_germs$flower_time_2) # simple correlation
+
+lm(merged_data_germs$flower_time_2 ~ merged_data_germs$prop) #linear model
+
+reg <- lm(merged_data_germs$flower_time_2 ~ merged_data_germs$prop)
+ggplot(merged_data_germs, aes(prop,average_flowering_time)) + geom_point() + geom_abline(intercept = reg$coefficients[1], slope = reg$coefficients[2]) # Plot the linear model we made
+
+```
+
+
+# Day 2
+
+## Layer and build with ggplot
+
+The package ggplot can be used to make complex and customized plots. It works in "layers", so we can add layers to make our plot increasingly customized. 
+
+```{r build_a_plot}
+
+plot <- ggplot(flowering_time_clean, aes(Population,flowering_time)) 
+
+# a blank plot
+plot 
+# add the data in the form of a boxplot
+plot + geom_boxplot()  
+# Add a line that represents the average flowering time for all populations (using a manually inserted number)
+plot + geom_boxplot() + geom_hline(yintercept = 50) 
+# change that line to be automatically calculated from the data
+plot + geom_boxplot() + geom_hline(yintercept = mean(flowering_time_clean$flowering_time)) 
+# add custom labels 
+plot + geom_boxplot() + labs(y="Flowering Time (Days)") 
+# Modify the whole plot with a theme 
+plot + geom_boxplot() + labs(y="Flowering Time (Days)") + theme_bw() # other common themes: theme_classic(), theme_light(), theme_void() 
+# modify the axis text
+plot + geom_boxplot() + labs(y="Flowering Time (Days)") + theme_bw() + theme(axis.text.x = element_text(angle=90))
+# IMPORTANT: Because ggplot works in layers, you can overwrite layers by changing their order. Not that switching the order of theme() and theme_bw() does not produce an identical plot: 
+plot + geom_boxplot() + labs(y="Flowering Time (Days)") + theme(axis.text.x = element_text(angle=90)) + theme_bw()
+# Add another data layer 
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time))
+# Modify data points
+# There are many aspects of plots that can be modified. Below, I modify the shape (shape) and transparency (alpha) of the points in the dot plot. There are 25 available shapes. 
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time),shape=6, alpha=0.5)
+# Add annotations 
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time)) + annotate("text", x="ODG", y=65, label="Total Sample Size = 69")
+# Automate the calculation for the annotation 
+big_label <- paste("Total Sample Size = ",nrow(flowering_time_clean),sep = "")
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time)) + annotate("text", x="ODG", y=65, label=big_label)
+# Add several annotations 
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time)) + annotate("text", x=c("CM","CMG","OD","ODG","ODW","ODWD","ODWG"), y=65, label=c(21,4,6,10,17,9,2))
+# Another way to add several annotations 
+sample_sizes <- c(21,4,6,10,17,9,2)
+many_labels <- paste("n",sample_sizes,sep = "=")
+plot + geom_boxplot() + geom_point(data=flowering_time_clean, aes(x=Population,y=flowering_time)) + annotate("text", x=c("CM","CMG","OD","ODG","ODW","ODWD","ODWG"), y=65, label=many_labels)
+# Modify the data within ggplot 
+plot + geom_boxplot() + geom_text(data=flowering_time_clean %>% group_by(Population) %>% summarise(top=max(flowering_time), n=n()), aes(x=Population, y=top+2, label= paste0("n = ", n)), nudge_y=1)
+```
+
+## What is your plot telling you? 
+
+We can take the same data and plot it in multiple ways-- each way might reveal something different about our data. It is good to plot your data in multiple ways. It is also good to think carefully about what you want to convey in a final plot you use for a presentation or publication. Below are several ways to plot the same data. You can look at each and think about how it might tell you something different about your data, or might draw your eye to different comparisons. 
+
+```{r what_to_plot}
+
+ggplot(germination_summary, aes(Germinated,n)) + geom_col()
+ggplot(germination_summary, aes(Germinated,n,fill=Population)) + geom_col()
+ggplot(germination_summary, aes(Germinated,n)) + geom_col() + facet_wrap(~Population)
+ggplot(germination_summary, aes(Germinated,n)) + geom_col() + facet_wrap(~Population, scales = "free_y")
+ggplot(germination_summary, aes(Germinated,n, fill=GA_treated)) + geom_col() + facet_wrap(~Population)
+ggplot(germination_summary, aes(GA_treated,n, fill=Germinated)) + geom_col() + facet_wrap(~Population)
+
+```
+
+
+
+## Colors
+
+There are several ways to adjust colors in ggplot. 
+
+When you want to be very specific, you can manually set colors. Colors can be defined from built-in colors within R, but R can also take the hex format. 
+
+```{r colors1}
+
+# Adding the color (or other modifications) in the "geom" layer will change the color of everything
+ggplot(germination_summary, aes(Germinated,n)) + geom_col(fill="darkblue")
+
+ggplot(germination_summary, aes(Germinated,n)) + geom_col(fill="#00008B") #same color written as hex
+
+# Adding the color within the aesthetic "aes()" will allow you to map color to data values
+ggplot(germination_summary, aes(GA_treated,n, fill=Germinated)) + geom_col() + facet_wrap(~Population) + scale_fill_manual(values = c("black","pink"))
+
+```
+
+You can also change all the colors at once using palettes. Below, we implement a set of colorblind-friendly palettes from the package `viridis`. 
+
+```{r colors2}
+
+ggplot(germination_summary, aes(Germinated,n,fill=Population)) + geom_col() # default colors
+
+#Will need to load the library in order to run this code: library(viridis) 
+
+ggplot(germination_summary, aes(Germinated,n,fill=Population)) + geom_col() + scale_fill_viridis(discrete=TRUE)
+ggplot(germination_summary, aes(Germinated,n,fill=Population)) + geom_col() + scale_fill_viridis(discrete=TRUE, option = "magma")
+
+```
+
+
+
+
+# Tips
+
+**First Tip: Be kind to Future You.** No, you will not remember how you generated that plot. Take steps to make your analyses reproducible. It is good for science, but the one who will benefit the most is usually Future You. This can include things like: 
+
+1. Saving your analyses in scripts, or better yet, in RMarkdown documents or Jupyter Notebooks. Ideally, those scripts will include *everything* you did-- importing data, loading libraries, etc. 
+2. Giving variables clear and unique names. It is tempting to modify "table1" and call it "table2", but it will be very easy to mix these up as you go. It will be even easier to mix these up when you come back to that script weeks or years later.
+
+**Second Tip: Be thoughtful about where you invest your time.** There is nothing wrong with doing something the "easy" way, but the easy way may not always be what it seems when coding. If it would take you 5 minutes to do a task, and 20 minutes to automate it, it doesn't make sense to automate that task-- *unless* you anticipate doing it many times. Spending 20 minutes one day automating a task is better than spending 5 minutes everyday redoing the same task.  
+
+**Third Tip: Do what works for you.** People might tell you that you should write all of your variables with camel case (likeThisForExample) instead of using underscores (like_this). They might tell you that real programmers only work from the terminal. They might tell you to use more white space, or less white space. But at the end of the day, you can write code however you want, as long as it works. Figure out what works for you, and know that your code can be good code no matter how ugly it is. 
+
+**Fourth Tip: It is okay not to know.** I may never remember how to turn the axis text of a ggplot. I've probably done it a hundred times, and I still had to look it up while developing this workshop. You don't have to memorize every possible command to be proficient at coding.
+
+![](meme.jpg) 
+
+
+# Additional Resources
+
+Below are links for some additional resources that I liked. There are tons of resources out there, though! Find something that works for you! 
+
+Carpentries has a lot of lessons related to data skills in R and python: https://carpentries.org/
+
+Tutorials on reproducibility: https://kbroman.org/tutorials.html
+
+Dates and Times in R: https://r4ds.had.co.nz/dates-and-times.html 
+
+Color Cheatsheet (has chart of R built in colors and palettes on pages 3 and 4): https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf 
+
+ggplot2 Cheatsheet: https://ggplot2.tidyverse.org/
+
+Other useful cheatsheets: https://posit.co/resources/cheatsheets/
