@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2024-06-06" />
+<meta name="date" content="2024-06-11" />
 
 <title>Summer 2024: Introduction to R</title>
 
@@ -1567,17 +1567,25 @@ border-radius: 0px;
 
 
 <h1 class="title toc-ignore">Summer 2024: Introduction to R</h1>
-<h4 class="date">2024-06-06</h4>
+<h4 class="date">2024-06-11</h4>
 
 </div>
 
 
-<div id="pre-workshop" class="section level1">
-<h1>Pre-Workshop</h1>
-<p>Before the workshop, you should have R and RStudio downloaded on your
-computer. You should also install the following packages:</p>
-<p>Required: <code>tidyverse</code></p>
-<p>Optional: <code>knitr</code>, <code>viridis</code></p>
+<div id="downloading-the-programs" class="section level1">
+<h1>Downloading the programs</h1>
+<ol style="list-style-type: decimal">
+<li><p>Install R, making sure to select the version that matches your
+operating system. <a href="https://posit.co/download/rstudio-desktop/" class="uri">https://posit.co/download/rstudio-desktop/</a></p></li>
+<li><p>Install RStudio. We are going to use RStudio for this workshop
+because it makes it easy to visualize what we are doing. However, you
+can run R without RStudio.</p></li>
+<li><p>Install the R package called <code>tidyverse</code> using the
+code <code>install.packages(&quot;tidyverse&quot;)</code></p></li>
+<li><p>There are two optional packages that would be required to
+recreate this document, but will not be required for this workshop:
+<code>knitr</code>, <code>viridis</code></p></li>
+</ol>
 </div>
 <div id="how-to-read-this-document" class="section level1">
 <h1>How to read this document:</h1>
@@ -1605,7 +1613,7 @@ what symbols mean for each programming language). White space is
 generally ignored, so you can feel free to add or remove white spaces in
 whatever way makes the code most readable for you. Variables can be used
 to store information, and are simply referred to by their name.</p>
-<pre class="r fold-show"><code>5+10 # A basic command</code></pre>
+<pre class="r fold-show"><code>5+10 # Comments: A basic command</code></pre>
 <pre><code>## [1] 15</code></pre>
 <pre class="r fold-show"><code>total &lt;- 5+10 # Assign a value to a variable
 total </code></pre>
@@ -1613,7 +1621,7 @@ total </code></pre>
 <pre class="r fold-show"><code>subtotal1 &lt;- 5 
 subtotal2 &lt;- 10
 total &lt;- subtotal1 + subtotal2 # Can use variables within later code
-total # Comments: Total is the sum of subtotal1 and subtotal2 </code></pre>
+total # Total is the sum of subtotal1 and subtotal2 </code></pre>
 <pre><code>## [1] 15</code></pre>
 <pre class="r fold-show"><code>print(&quot;Hello World&quot;) # A basic function</code></pre>
 <pre><code>## [1] &quot;Hello World&quot;</code></pre>
@@ -1946,8 +1954,6 @@ ggplot(flowering_time_clean, aes(Population,flowering_time)) + geom_boxplot()</c
 <h2>Question 4</h2>
 <p>Did populations with faster flowering time have higher germination
 rates?</p>
-<p><strong>We skipped this question in our workshop, but I will leave
-the code here for you to see.</strong></p>
 <pre class="r"><code>pop_means &lt;- flowering_time_clean %&gt;% group_by(Population) %&gt;% summarize(average_flowering_time = mean(flowering_time)) # remake pop means with corrected data table 
 
 merged_data &lt;- full_join(germination_props,pop_means) # includes all rows from both tables</code></pre>

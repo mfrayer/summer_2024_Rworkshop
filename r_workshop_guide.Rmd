@@ -17,13 +17,15 @@ library(viridis)
 ```
 
 
-# Pre-Workshop 
+# Downloading the programs 
 
-Before the workshop, you should have R and RStudio downloaded on your computer. You should also install the following packages: 
+1. Install R, making sure to select the version that matches your operating system.  https://posit.co/download/rstudio-desktop/
 
-Required: `tidyverse` 
+2. Install RStudio. We are going to use RStudio for this workshop because it makes it easy to visualize what we are doing. However, you can run R without RStudio. 
 
-Optional: `knitr`, `viridis`
+3. Install the R package called `tidyverse` using the code `install.packages("tidyverse")`
+
+4. There are two optional packages that would be required to recreate this document, but will not be required for this workshop: `knitr`, `viridis`
 
 # How to read this document: 
 
@@ -51,7 +53,7 @@ R has a very clean syntax (referring to the set of rules that defines what symbo
 
 ```{r commands, class.source = 'fold-show'}
 
-5+10 # A basic command
+5+10 # Comments: A basic command
 
 total <- 5+10 # Assign a value to a variable
 total 
@@ -59,7 +61,7 @@ total
 subtotal1 <- 5 
 subtotal2 <- 10
 total <- subtotal1 + subtotal2 # Can use variables within later code
-total # Comments: Total is the sum of subtotal1 and subtotal2 
+total # Total is the sum of subtotal1 and subtotal2 
 
 print("Hello World") # A basic function
 
@@ -304,7 +306,6 @@ ggplot(flowering_time_clean, aes(Population,flowering_time)) + geom_boxplot()
 
 Did populations with faster flowering time have higher germination rates? 
 
-**We skipped this question in our workshop, but I will leave the code here for you to see.**
 
 ```{r q4}
 
