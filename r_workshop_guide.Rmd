@@ -317,7 +317,7 @@ merged_data <- right_join(germination_props,pop_means) # includes all rows from 
 
 merged_data_germs <- merged_data %>% filter(Germinated=="Yes") 
 
-ggplot(merged_data_germs, aes(prop,average_flowering_time)) + geom_point()
+ggplot(merged_data_germs, aes(prop,as.numeric(average_flowering_time))) + geom_point()
 
 
 # We can also calculate a correlation, or plot a regression line. This data is not ideal for this purpose, I just want to share the code with you. 
@@ -331,7 +331,7 @@ cor(merged_data_germs$prop,merged_data_germs$flower_time_2) # simple correlation
 lm(merged_data_germs$flower_time_2 ~ merged_data_germs$prop) #linear model
 
 reg <- lm(merged_data_germs$flower_time_2 ~ merged_data_germs$prop)
-ggplot(merged_data_germs, aes(prop,average_flowering_time)) + geom_point() + geom_abline(intercept = reg$coefficients[1], slope = reg$coefficients[2]) # Plot the linear model we made
+ggplot(merged_data_germs, aes(prop,as.numeric(average_flowering_time))) + geom_point() + geom_abline(intercept = reg$coefficients[1], slope = reg$coefficients[2]) # Plot the linear model we made
 
 ```
 
@@ -344,7 +344,7 @@ The package ggplot can be used to make complex and customized plots. It works in
 
 ```{r build_a_plot}
 
-plot <- ggplot(flowering_time_clean, aes(Population,flowering_time)) 
+plot <- ggplot(flowering_time_clean, aes(Population,as.numeric(flowering_time))) 
 
 # a blank plot
 plot 
